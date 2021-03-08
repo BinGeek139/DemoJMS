@@ -22,12 +22,27 @@ public class Client extends javax.swing.JFrame {
     String userName;
     HandleConnection connection = new HandleConnection();
     MyMessageListener messageListener = new MyMessageListener();
-
+    private static Client instance;
+    public static Client getInstance(){
+        if(instance == null){
+            instance=new Client();
+            instance.setVisible(true);
+        }
+        return instance;
+        
+    }
+    
     /**
      * Creates new form Client
      */
     public Client() {
         initComponents();
+        
+    }
+    public void addMessage(String message){
+        String currentContent=topic.getText();
+        currentContent+=("\n"+message);
+        topic.setText(currentContent);
     }
 
     /**
@@ -202,6 +217,7 @@ public class Client extends javax.swing.JFrame {
             }
         });
     }
+    
 public void run(){
     
 }

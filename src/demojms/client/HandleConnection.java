@@ -30,8 +30,13 @@ public class HandleConnection {
     private TopicPublisher publisher = null;
     private TopicSubscriber subscriber = null;
     private TopicSession session = null;
-
-    public void createConnection(String topicChat, MessageListener listener) {
+    /**
+     * Tạo kết nôi dến ActiveMQ
+     * @param topicChat: là tên groupchat
+     * @param listener: Nơi lăng nghe và xử lý các message 
+     */
+    
+    public Boolean createConnection(String topicChat, MessageListener listener) {
         try {
             TopicConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
 
@@ -43,12 +48,18 @@ public class HandleConnection {
             subscriber = session.createSubscriber(topic);
             subscriber.setMessageListener(listener);
             connection.start();
-
+            return true;
         } catch (JMSException ex) {
             ex.printStackTrace();
         }
+        return false;
     }
     
+    /**
+     * Gửi messgae
+     * @param content
+     * @return 
+     */
     public boolean sendMessage(String content) {
         TextMessage message;
         try {

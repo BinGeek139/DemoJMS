@@ -5,6 +5,7 @@
  */
 package demojms.client;
 
+import form.Client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.jms.JMSException;
@@ -27,14 +28,14 @@ public class MyMessageListener implements MessageListener{
         try {
             TextMessage message=(TextMessage)msg;
             System.out.println(message.getText());
-            // todo handle message
-            
-            
+            Client.getInstance().addMessage(message.getText());
             
         } catch (JMSException ex) {
            ex.printStackTrace();
         }
         
     }
+    
+   
     
 }
