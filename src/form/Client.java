@@ -8,9 +8,12 @@ package form;
 import demojms.client.HandleConnection;
 import demojms.client.MyMessageListener;
 import demojms.util.Const;
+import javafx.scene.control.ComboBox;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 
 /**
@@ -19,29 +22,45 @@ import javax.swing.JOptionPane;
  */
 public class Client extends javax.swing.JFrame {
 
-    String userName;
-    HandleConnection connection = new HandleConnection();
+    HandleConnection connection;
     MyMessageListener messageListener = new MyMessageListener();
     private static Client instance;
-    public static Client getInstance(){
-        if(instance == null){
-            instance=new Client();
+    public static String userName;
+
+    public static Client getInstance() {
+        if (instance == null) {
+            instance = new Client();
             instance.setVisible(true);
         }
         return instance;
-        
+
     }
-    
+
+    public void addUser(String user) {
+        System.out.println("user: " + user + "  username" + userName);
+        if (!user.equals(userName)) {
+            boxModel.addElement(user);
+            selectUser.setModel(boxModel);
+        }
+    }
+    DefaultComboBoxModel<String> boxModel;
+
     /**
      * Creates new form Client
      */
     public Client() {
         initComponents();
-        
+        connection = new HandleConnection();
+        connection.startOnline();
+        boxModel = new DefaultComboBoxModel<>();
+        boxModel.addElement("All");
+
+        selectUser.setModel(boxModel);
     }
-    public void addMessage(String message){
-        String currentContent=topic.getText();
-        currentContent+=("\n"+message);
+
+    public void addMessage(String message) {
+        String currentContent = topic.getText();
+        currentContent += ("\n" + message);
         topic.setText(currentContent);
         this.content.setText(Const.STRING_EMPTY);
     }
@@ -65,6 +84,7 @@ public class Client extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         content = new javax.swing.JTextArea();
+        selectUser = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -103,6 +123,8 @@ public class Client extends javax.swing.JFrame {
         content.setRows(5);
         jScrollPane2.setViewportView(content);
 
+        selectUser.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -125,11 +147,12 @@ public class Client extends javax.swing.JFrame {
                                 .addGap(35, 35, 35)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(selectUser, javax.swing.GroupLayout.PREFERRED_SIZE, 177, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(251, 251, 251)
                         .addComponent(jLabel2)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(50, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -143,16 +166,17 @@ public class Client extends javax.swing.JFrame {
                     .addComponent(jLabel1))
                 .addGap(20, 20, 20)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(34, 34, 34)
+                .addGap(18, 18, 18)
+                .addComponent(selectUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(29, 29, 29)
-                        .addComponent(jButton3)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton3)
+                        .addGap(18, 18, 18))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(25, 25, 25))
         );
 
         pack();
@@ -169,25 +193,33 @@ public class Client extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Username is not null^@^");
             return;
         }
+        connection.sendUsernameOnline(userName);
+        connection.createEndPoint(userName);
         connection.createConnection(Const.TOPIC_CHAT, messageListener);
+
         textName.setEditable(false);
+        this.userName = userName;
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:send
         try {
-            String contentt = content.getText().trim();
-            connection.sendMessage(userName + ":" + contentt);
+            String contentt = userName + ":" + content.getText().trim();
+
+            String user = (String) selectUser.getSelectedItem();
+            if ("All".equals(user)) {
+                connection.sendMessage(contentt);
+            } else {
+                connection.sendMessageToPoint(user, contentt);
+            }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }//GEN-LAST:event_jButton2ActionPerformed
 
- 
-    
-public void run(){
-    
-}
+    public void run() {
+
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea content;
     private javax.swing.JButton jButton1;
@@ -197,6 +229,7 @@ public void run(){
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JComboBox<String> selectUser;
     private javax.swing.JTextField textName;
     private javax.swing.JTextArea topic;
     // End of variables declaration//GEN-END:variables

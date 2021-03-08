@@ -23,5 +23,6 @@ public interface Const {
     String URL = "tcp://localhost:61616";
     String TOPIC_CHAT="topic/chat";
     String STRING_EMPTY="";
+    String TOPIC_ONLINE="topic/online";
 
 }

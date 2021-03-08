@@ -5,9 +5,11 @@
  */
 package demojms.client;
 
+import demojms.util.Const;
 import static demojms.util.Const.PASSWORD;
 import static demojms.util.Const.URL;
 import static demojms.util.Const.USERNAME;
+import form.Client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.jms.JMSException;
@@ -79,27 +81,34 @@ public class HandleConnection {
         }
     }
 
-    
     public void createEndPoint(String strQueue) {
         QueueConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
         try {
             QueueConnection queueConnection = connectionFactory.createQueueConnection();
             QueueSession queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
             Queue queue = queueSession.createQueue(strQueue);
-            QueueReceiver receiver=queueSession.createReceiver(queue);
-            MessageListener listener=new MessageListener() {
+            QueueReceiver receiver = queueSession.createReceiver(queue);
+            
+            MessageListener listener = new MessageListener() {
                 @Override
                 public void onMessage(Message msg) {
-                    
+                    TextMessage message = (TextMessage) msg;
+                    try {
+                        Client.getInstance().addMessage(message.getText());
+                    } catch (JMSException ex) {
+                        Logger.getLogger(HandleConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
             };
+            receiver.setMessageListener(listener);
             
+            queueConnection.start();
+
         } catch (JMSException ex) {
             Logger.getLogger(HandleConnection.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    
     /**
      * Gửi messgae
      *
@@ -119,4 +128,51 @@ public class HandleConnection {
         }
 
     }
+    
+    
+    TopicSession topicSessionOnline=null;
+
+    public void startOnline() {
+        try {
+            TopicConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
+
+            TopicConnection connection = connectionFactory.createTopicConnection();
+            topicSessionOnline = connection.createTopicSession(Boolean.FALSE, TopicSession.AUTO_ACKNOWLEDGE);
+            Topic topic = topicSessionOnline.createTopic(Const.TOPIC_ONLINE);
+            publisher = topicSessionOnline.createPublisher(topic);
+            subscriber = topicSessionOnline.createSubscriber(topic);
+            subscriber.setMessageListener(new MessageListener() {
+                @Override
+                public void onMessage(Message msg) {
+                    TextMessage message = (TextMessage) msg;
+                    try {
+                        Client.getInstance().addUser(message.getText());
+                          System.out.println("topic online đã  nhận được: "+message.getText());
+                    } catch (JMSException ex) {
+                        Logger.getLogger(HandleConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+            connection.start();
+            
+
+        } catch (JMSException ex) {
+            ex.printStackTrace();
+        }
+
+    }
+    
+    public void sendUsernameOnline(String user){
+        TextMessage message;
+            try {
+                message = topicSessionOnline.createTextMessage();
+                message.setText(user);
+                this.publisher.send(message);
+                System.out.println(user+" đã online");
+         
+            } catch (JMSException ex) {
+                ex.printStackTrace();
+            }
+    }
+
 }
