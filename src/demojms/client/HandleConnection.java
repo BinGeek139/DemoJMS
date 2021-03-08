@@ -11,7 +11,14 @@ import static demojms.util.Const.USERNAME;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.MessageListener;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueReceiver;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
@@ -30,12 +37,13 @@ public class HandleConnection {
     private TopicPublisher publisher = null;
     private TopicSubscriber subscriber = null;
     private TopicSession session = null;
+
     /**
      * Tạo kết nôi dến ActiveMQ
+     *
      * @param topicChat: là tên groupchat
-     * @param listener: Nơi lăng nghe và xử lý các message 
+     * @param listener: Nơi lăng nghe và xử lý các message
      */
-    
     public void createConnection(String topicChat, MessageListener listener) {
         try {
             TopicConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
@@ -48,17 +56,55 @@ public class HandleConnection {
             subscriber = session.createSubscriber(topic);
             subscriber.setMessageListener(listener);
             connection.start();
-   
+
         } catch (JMSException ex) {
             ex.printStackTrace();
         }
 
     }
+
+    public void sendMessageToPoint(String strQueue, String message) {
+        QueueConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
+        try {
+            QueueConnection queueConnection = connectionFactory.createQueueConnection();
+            QueueSession queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
+            Queue queue = queueSession.createQueue(strQueue);
+            QueueSender queueSender = queueSession.createSender(queue);
+            TextMessage txtMessage = queueSession.createTextMessage();
+            txtMessage.setText(message);
+            queueSender.send(txtMessage);
+            queueConnection.close();
+        } catch (JMSException ex) {
+            Logger.getLogger(HandleConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    
+    public void createEndPoint(String strQueue) {
+        QueueConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
+        try {
+            QueueConnection queueConnection = connectionFactory.createQueueConnection();
+            QueueSession queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
+            Queue queue = queueSession.createQueue(strQueue);
+            QueueReceiver receiver=queueSession.createReceiver(queue);
+            MessageListener listener=new MessageListener() {
+                @Override
+                public void onMessage(Message msg) {
+                    
+                }
+            };
+            
+        } catch (JMSException ex) {
+            Logger.getLogger(HandleConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     
     /**
      * Gửi messgae
+     *
      * @param content
-     * @return 
+     * @return
      */
     public boolean sendMessage(String content) {
         TextMessage message;
