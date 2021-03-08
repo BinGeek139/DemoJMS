@@ -36,7 +36,7 @@ public class HandleConnection {
      * @param listener: Nơi lăng nghe và xử lý các message 
      */
     
-    public Boolean createConnection(String topicChat, MessageListener listener) {
+    public void createConnection(String topicChat, MessageListener listener) {
         try {
             TopicConnectionFactory connectionFactory = new ActiveMQConnectionFactory(USERNAME, PASSWORD, URL);
 
@@ -48,11 +48,11 @@ public class HandleConnection {
             subscriber = session.createSubscriber(topic);
             subscriber.setMessageListener(listener);
             connection.start();
-            return true;
+   
         } catch (JMSException ex) {
             ex.printStackTrace();
         }
-        return false;
+
     }
     
     /**

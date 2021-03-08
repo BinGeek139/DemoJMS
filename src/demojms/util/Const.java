@@ -22,5 +22,6 @@ public interface Const {
     String PASSWORD = "admin";
     String URL = "tcp://localhost:61616";
     String TOPIC_CHAT="topic/chat";
+    String STRING_EMPTY="";
 
 }
